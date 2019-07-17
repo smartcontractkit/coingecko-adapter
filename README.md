@@ -1,28 +1,14 @@
-# Chainlink NodeJS Serverless External Adapter Template
+# Chainlink CoinGecko External Adapter
 
-This template provides a basic framework for developing Chainlink external adapters in NodeJS. Comments are included to assist with development and testing of the external adapter. Once the API-specific values (like query parameters and API key authentication) have been added to the adapter, it is very easy to add some tests to verify that the data will be correctly formatted when returned to the Chainlink node. There is no need to use any additional frameworks or to run a Chainlink node in order to test the adapter.
+External adapter for use on Google Cloud Platform or AWS Lambda. Zip and upload, then use trigger URL as bridge endpoint.
 
-## Creating your own adapter from this template
+## Input Params
 
-Clone this repo and change "MyProject" below to the name of your project
+- `coin`: The coin to query (required, may use ticker or name)
 
-```bash
-git clone https://github.com/thodges-gh/CL-EA-NodeJS-Template.git MyProject
-```
+## Output Format
 
-Enter into the newly-created directory
-
-```bash
-cd MyProject
-```
-
-Create your own repo before moving on to the next step
-
-Replace \<url> below with your repo's .git URL
-
-```bash
-git remote set-url origin <url>
-```
+_The JSON response is just too large to list here, see the [official documentation](https://www.coingecko.com/api/documentations/v3#/coins/get_coins__id_)._
 
 ## Install
 
@@ -39,7 +25,7 @@ npm test
 ## Create the zip
 
 ```bash
-zip -r cl-ea.zip .
+zip -r cl-coingecko.zip .
 ```
 
 ## Install to AWS Lambda
@@ -51,20 +37,14 @@ zip -r cl-ea.zip .
   - Choose an existing role or create a new one
   - Click Create Function
 - Under Function code, select "Upload a .zip file" from the Code entry type drop-down
-- Click Upload and select the `cl-ea.zip` file
+- Click Upload and select the `cl-coingecko.zip` file
 - Handler should remain index.handler
-- Add the environment variable (repeat for all environment variables):
-  - Key: API_KEY
-  - Value: Your_API_key
 - Save
 
 
 ## Install to GCP
 
 - In Functions, create a new function, choose to ZIP upload
-- Click Browse and select the `cl-ea.zip` file
+- Click Browse and select the `cl-coingecko.zip` file
 - Select a Storage Bucket to keep the zip in
 - Function to execute: gcpservice
-- Click More, Add variable (repeat for all environment variables)
-  - NAME: API_KEY
-  - VALUE: Your_API_key

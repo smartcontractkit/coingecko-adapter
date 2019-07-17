@@ -1,11 +1,9 @@
 {
-  "name": "EA-NodeJS-Template",
+  "name": "cl-coingecko",
   "version": "1.0.0",
-  "author": "",
-  "description": "",
   "license": "MIT",
   "scripts": {
-    "test": "./node_modules/.bin/_mocha"
+    "test": "./node_modules/.bin/_mocha --timeout 0"
   },
   "dependencies": {
     "request": "^2.88.0"

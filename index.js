@@ -1,52 +1,52 @@
 const request = require('request');
 
+const convertFromTicker = ticker => {
+	switch (ticker.toUpperCase()) {
+		case "BTC":
+			return "bitcoin"
+		case "ETH":
+			return "ethereum"
+		case "LINK":
+			return "chainlink"
+		default:
+			return ticker
+	}
+}
+
 const createRequest = (input, callback) => {
-  let url = process.env.URL || "";
-  // Including an endpoint parameter is optional but common since
-  // different endpoints of the same API typically respond with
-  // data structured different from one another
-  const endpoint = process.env.ENDPOINT || input.data.endpoint || "";
-  // Include a trailing slash "/" in your url if endpoint is in use
-  // and part of the URL
-  url = url + endpoint;
+  let url = "https://api.coingecko.com/api/v3/coins/";
+  const coin = input.data.coin || "ethereum";
+  const symbol = convertFromTicker(coin)
+  url = url + symbol
 
-  // Create additional input params here, for example:
-  const coin = input.data.coin || "";
-  const market = input.data.market || "";
-
-  // Build your query object with the given input params, for example:
   const queryObj = {
-    fsym: coin,
-    tsyms: market
+    localization: false,
+	tickers: false,
+	market_data: true,
+	community_data: false,
+	developer_data: false,
+	sparkline: false
   }
 
   const options = {
     url: url,
-    // Change the API_KEY key name to the name specified by the API
-    // Note: If the API only requires a request header to be specified
-    // for authentication, you can place this in the job's specification
-    // instead of writing an external adapter
-    /*
-    headers: {
-      "API_KEY": process.env.API_KEY
-    },
-    */
     qs: queryObj,
     json: true
   }
   request(options, (error, response, body) => {
-    // Add any API-specific failure case here to pass that error back to Chainlink
     if (error || response.statusCode >= 400) {
       callback(response.statusCode, {
         jobRunID: input.id,
         status: "errored",
-        error: body,
+		error: body,
+		errorMessage : body.error,
         statusCode: response.statusCode
       });
     } else {
       callback(response.statusCode, {
         jobRunID: input.id,
-        data: body,
+		data: body,
+		result: body.market_data.current_price.usd,
         statusCode: response.statusCode
       });
     }

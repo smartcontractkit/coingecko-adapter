@@ -2,11 +2,9 @@ const assert = require('chai').assert;
 const createRequest = require('../index.js').createRequest;
 
 describe('createRequest', () => {
+  const jobID = "278c97ffadb54a5bbb93cfec5f7b5503";
 
   context('Requests data', () => {
-    // The value here doesn't matter, we just want to be sure that the adapter returns the same
-    const jobID = "278c97ffadb54a5bbb93cfec5f7b5503";
-    // Update the parameters in the data to match actual requests for the target API
     const req = {
       id: jobID,
       data: {
@@ -19,7 +17,27 @@ describe('createRequest', () => {
       createRequest(req, (statusCode, data) => {
         assert.equal(statusCode, 200);
         assert.equal(data.jobRunID, jobID);
-        assert.isNotEmpty(data.data);
+		assert.isNotEmpty(data.data);
+		assert.isNumber(data.result);
+        done();
+      });
+    });
+  });
+
+  context('with bad input', () => {
+    const badReq = {
+      id: jobID,
+      data: {
+        coin: "notreal"
+      }
+    };
+
+    it('returns an error', (done) => {
+      createRequest(badReq, (statusCode, data) => {
+        assert.isAbove(statusCode, 400);
+        assert.equal(data.jobRunID, jobID);
+		assert.equal(data.status, "errored");
+		assert.isNotEmpty(data.errorMessage);
         done();
       });
     });
