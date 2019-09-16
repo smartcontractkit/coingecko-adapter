@@ -2,19 +2,19 @@ const request = require('request');
 const _ = require('lodash');
 
 const convertFromTicker = (ticker, callback) => {
-  request({
-    url: "https://api.coingecko.com/api/v3/coins/list",
-    json: true
-  }, (error, response, body) => {
-    if (error || response.statusCode >= 400) {
-        return callback("");
-    } else {
-        let coin = body.find(x => x.symbol.toLowerCase() === ticker.toLowerCase());
-        if (typeof coin === "undefined")
+    request({
+        url: "https://api.coingecko.com/api/v3/coins/list",
+        json: true
+    }, (error, response, body) => {
+        if (error || response.statusCode >= 400) {
             return callback("");
-        return callback(coin.name.toLowerCase());
-    }
-  });
+        } else {
+            let coin = body.find(x => x.symbol.toLowerCase() === ticker.toLowerCase());
+            if (typeof coin === "undefined")
+                return callback("");
+            return callback(coin.name.toLowerCase());
+        }
+    });
 };
 
 const createRequest = (input, callback) => {
@@ -62,17 +62,17 @@ const createRequest = (input, callback) => {
 // This is a wrapper to allow the function to work with
 // GCP Functions
 exports.gcpservice = (req, res) => {
-  createRequest(req.body, (statusCode, data) => {
-    res.status(statusCode).send(data);
-  });
+    createRequest(req.body, (statusCode, data) => {
+        res.status(statusCode).send(data);
+    });
 };
 
 // This is a wrapper to allow the function to work with
 // AWS Lambda
 exports.handler = (event, context, callback) => {
-  createRequest(event, (statusCode, data) => {
-    callback(null, data);
-  });
+    createRequest(event, (statusCode, data) => {
+        callback(null, data);
+    });
 };
 
 // This allows the function to be exported for testing
