@@ -1,52 +1,52 @@
 const request = require('request');
+const _ = require('lodash');
 
-const convertFromTicker = ticker => {
-	switch (ticker.toUpperCase()) {
-		case "BTC":
-			return "bitcoin"
-		case "ETH":
-			return "ethereum"
-		case "LINK":
-			return "chainlink"
-		default:
-			return ticker
-	}
+const convertFromTicker = (ticker) => {
+  request({
+    url: "https://api.coingecko.com/api/v3/coins/list",
+    json: true
+  }, (error, response, body) => {
+    if (error || response.statusCode >= 400) {
+      return ticker;
+    } else {
+      const result = _.filter(body, x => x.symbol === ticker.toLowerCase());
+      console.log(result[0]);
+      return result[0].id;
+    }
+  });
 }
 
 const createRequest = (input, callback) => {
-  let url = "https://api.coingecko.com/api/v3/coins/";
-  const coin = input.data.coin || "ethereum";
-  const symbol = convertFromTicker(coin)
-  url = url + symbol
+  let url = "https://api.coingecko.com/api/v3/simple/price";
+  let coin = input.data.coin || "ethereum";
+  coin = convertFromTicker(coin);
+  const market = input.data.market || "USD";
+  url = url + coin;
 
   const queryObj = {
-    localization: false,
-	tickers: false,
-	market_data: true,
-	community_data: false,
-	developer_data: false,
-	sparkline: false
-  }
+    ids: coin,
+    vs_currencies: market
+  };
 
   const options = {
     url: url,
     qs: queryObj,
     json: true
-  }
+  };
   request(options, (error, response, body) => {
     if (error || response.statusCode >= 400) {
       callback(response.statusCode, {
         jobRunID: input.id,
         status: "errored",
-		error: body,
-		errorMessage : body.error,
+        error: body,
+        errorMessage : body.error,
         statusCode: response.statusCode
       });
     } else {
       callback(response.statusCode, {
         jobRunID: input.id,
-		data: body,
-		result: body.market_data.current_price.usd,
+        data: body,
+        result: body.market_data.current_price.usd,
         statusCode: response.statusCode
       });
     }
