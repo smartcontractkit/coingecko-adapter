@@ -28,6 +28,16 @@ npm test
 zip -r cl-coingecko.zip .
 ```
 
+## Run with Docker
+
+```bash
+docker build . -t coingecko-adapter
+docker run -d \
+    -p 8080:8080 \
+    -e EA_PORT=8080 \
+    coingecko-adapter
+```
+
 ## Install to AWS Lambda
 
 - In Lambda Functions, create function

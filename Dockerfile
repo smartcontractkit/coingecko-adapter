@@ -3,7 +3,7 @@ FROM node:alpine
 WORKDIR /adapter
 ADD . .
 
-ENV EA_PORT=80
+ENV EA_PORT=8080
 
 RUN npm install
-ENTRYPOINT ["node", "app.js"]
+CMD node app.js
