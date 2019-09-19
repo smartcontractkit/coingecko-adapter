@@ -6,6 +6,7 @@
     "test": "./node_modules/.bin/_mocha --timeout 0"
   },
   "dependencies": {
+    "lodash": "^4.17.15",
     "request": "^2.88.0"
   },
   "devDependencies": {
