@@ -12,7 +12,7 @@ const convertFromTicker = (ticker, callback) => {
       let coin = body.find(x => x.symbol.toLowerCase() === ticker.toLowerCase())
       if (typeof coin === 'undefined')
         return callback('')
-      return callback(coin.name.toLowerCase())
+      return callback(coin.id.toLowerCase())
     }
   })
 }
