@@ -1,9 +1,16 @@
-FROM node:alpine
+FROM node:12-alpine
 
-WORKDIR /adapter
-ADD . .
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
-ENV EA_PORT=8080
+WORKDIR /home/node/app
 
-RUN npm install
-CMD node app.js
+COPY package.json ./
+COPY yarn.lock ./
+
+USER node
+
+RUN yarn --frozen-lockfile
+
+COPY --chown=node:node . .
+
+CMD [ "node", "app.js" ]

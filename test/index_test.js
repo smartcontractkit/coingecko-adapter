@@ -35,10 +35,10 @@ describe('createRequest', () => {
 
     it('returns an error', (done) => {
       createRequest(badReq, (statusCode, data) => {
-        assert.isAbove(statusCode, 400)
+        assert.equal(statusCode, 200)
         assert.equal(data.jobRunID, jobID)
         assert.equal(data.status, 'errored')
-        assert.isNotEmpty(data.errorMessage)
+        assert.isNotEmpty(data.error)
         done()
       })
     })

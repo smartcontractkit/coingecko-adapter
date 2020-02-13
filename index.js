@@ -1,24 +1,60 @@
-const request = require('request')
+const rp = require('request-promise')
 const _ = require('lodash')
+const retries = process.env.RETRIES || 3
+const delay = process.env.RETRY_DELAY || 1000
 
-const convertFromTicker = (ticker, callback) => {
-  request({
-    url: 'https://api.coingecko.com/api/v3/coins/list',
-    json: true
-  }, (error, response, body) => {
-    if (error || response.statusCode >= 400) {
-      return callback('')
-    } else {
-      let coin = body.find(x => x.symbol.toLowerCase() === ticker.toLowerCase())
-      if (typeof coin === 'undefined')
-        return callback('')
-      return callback(coin.id.toLowerCase())
+const requestRetry = (options, retries) => {
+  return new Promise((resolve, reject) => {
+    const retry = (options, n) => {
+      return rp(options)
+        .then(response => {
+          if (response.body.error || _.isEmpty(response.body)) {
+            if (n === 1) {
+              reject(response)
+            } else {
+              setTimeout(() => {
+                retries--
+                retry(options, retries)
+              }, delay)
+            }
+          } else {
+            return resolve(response)
+          }
+        })
+        .catch(error => {
+          if (n === 1) {
+            reject(error)
+          } else {
+            setTimeout(() => {
+              retries--
+              retry(options, retries)
+            }, delay)
+          }
+        })
     }
+    return retry(options, retries)
   })
 }
 
+const convertFromTicker = (ticker, callback) => {
+  requestRetry({
+    url: 'https://api.coingecko.com/api/v3/coins/list',
+    json: true,
+    resolveWithFullResponse: true
+  }, retries)
+    .then(response => {
+      let coin = response.body.find(x => x.symbol.toLowerCase() === ticker.toLowerCase())
+      if (typeof coin === 'undefined')
+        return callback('undefined')
+      return callback(coin.id.toLowerCase())
+    })
+    .catch(error => {
+      return callback('')
+    })
+}
+
 const createRequest = (input, callback) => {
-  convertFromTicker(input.data.coin || 'ETH', (coin) => {
+  convertFromTicker(input.data.coin, (coin) => {
     let url = 'https://api.coingecko.com/api/v3/simple/price'
     const market = input.data.market || 'usd'
 
@@ -30,55 +66,41 @@ const createRequest = (input, callback) => {
     const options = {
       url: url,
       qs: queryObj,
-      json: true
+      json: true,
+      resolveWithFullResponse: true
     }
-    request(options, (error, response, body) => {
-      let result
-      if (_.isEmpty(body)) {
-        response.statusCode = 403 // Force status code if response is empty
-        body = {
-          'error': 'Empty response'
-        }
-      } else {
-        result = body[coin.toLowerCase()][market.toLowerCase()]
-        body.result = result
-      }
-      if (error || response.statusCode >= 400) {
+    requestRetry(options, retries)
+      .then(response => {
+        const result = response.body[coin.toLowerCase()][market.toLowerCase()]
+        response.body.result = result
         callback(response.statusCode, {
+          jobRunID: input.id,
+          data: response.body,
+          result,
+          statusCode: response.statusCode
+        })
+      })
+      .catch(error => {
+        callback(error.statusCode, {
           jobRunID: input.id,
           status: 'errored',
-          error: body,
-          errorMessage: body.error,
-          statusCode: response.statusCode
+          error,
+          statusCode: error.statusCode
         })
-      } else {
-        callback(response.statusCode, {
-          jobRunID: input.id,
-          data: body,
-          result: result || '',
-          statusCode: response.statusCode
-        })
-      }
     })
   })
 }
 
-// This is a wrapper to allow the function to work with
-// GCP Functions
 exports.gcpservice = (req, res) => {
   createRequest(req.body, (statusCode, data) => {
     res.status(statusCode).send(data)
   })
 }
 
-// This is a wrapper to allow the function to work with
-// AWS Lambda
 exports.handler = (event, context, callback) => {
   createRequest(event, (statusCode, data) => {
     callback(null, data)
   })
 }
 
-// This allows the function to be exported for testing
-// or for running in express
 module.exports.createRequest = createRequest
