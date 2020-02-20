@@ -2,6 +2,7 @@ const rp = require('request-promise')
 const _ = require('lodash')
 const retries = process.env.RETRIES || 3
 const delay = process.env.RETRY_DELAY || 1000
+const timeout = process.env.TIMEOUT || 1000
 
 const requestRetry = (options, retries) => {
   return new Promise((resolve, reject) => {
@@ -40,6 +41,7 @@ const convertFromTicker = (ticker, callback) => {
   requestRetry({
     url: 'https://api.coingecko.com/api/v3/coins/list',
     json: true,
+    timeout,
     resolveWithFullResponse: true
   }, retries)
     .then(response => {
@@ -67,6 +69,7 @@ const createRequest = (input, callback) => {
       url: url,
       qs: queryObj,
       json: true,
+      timeout,
       resolveWithFullResponse: true
     }
     requestRetry(options, retries)
