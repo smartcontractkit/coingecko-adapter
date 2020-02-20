@@ -56,9 +56,10 @@ const convertFromTicker = (ticker, callback) => {
 }
 
 const createRequest = (input, callback) => {
-  convertFromTicker(input.data.coin, (coin) => {
+  const symbol = input.data.from || input.data.coin
+  convertFromTicker(symbol, (coin) => {
     let url = 'https://api.coingecko.com/api/v3/simple/price'
-    const market = input.data.market || 'usd'
+    const market = input.data.to || input.data.market || 'usd'
 
     const queryObj = {
       ids: coin,

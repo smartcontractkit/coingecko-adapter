@@ -4,7 +4,8 @@ External adapter for use on Google Cloud Platform or AWS Lambda. Zip and upload,
 
 ## Input Params
 
-- `coin`: The coin to query (required, may use ticker or name)
+- `from` or `coin`: The coin to query (required, may use ticker or name)
+- `to` or `market`: The currency to convert to
 
 ## Output Format
 
