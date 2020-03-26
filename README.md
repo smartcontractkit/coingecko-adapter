@@ -4,7 +4,8 @@ External adapter for use on Google Cloud Platform or AWS Lambda. Zip and upload,
 
 ## Input Params
 
-- `from` or `coin`: The coin to query (required, may use ticker or name)
+- `coinid`: The CoinGecko id of the coin to query (required if not using `from`)
+- `from` or `coin`: The ticker of the coin to query (required if not using `coinid`)
 - `to` or `market`: The currency to convert to
 
 ## Output Format
