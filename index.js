@@ -37,7 +37,10 @@ const requestRetry = (options, retries) => {
   })
 }
 
-const convertFromTicker = (ticker, callback) => {
+const convertFromTicker = (ticker, coinId, callback) => {
+  if (coinId.length !== 0)
+    return callback(coinId.toLowerCase())
+
   requestRetry({
     url: 'https://api.coingecko.com/api/v3/coins/list',
     json: true,
@@ -57,7 +60,7 @@ const convertFromTicker = (ticker, callback) => {
 
 const createRequest = (input, callback) => {
   const symbol = input.data.from || input.data.coin
-  convertFromTicker(symbol, (coin) => {
+  convertFromTicker(symbol, input.data.coinid || '', (coin) => {
     let url = 'https://api.coingecko.com/api/v3/simple/price'
     const market = input.data.to || input.data.market || 'usd'
 

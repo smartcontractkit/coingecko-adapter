@@ -43,4 +43,25 @@ describe('createRequest', () => {
       })
     })
   })
+
+  context('Using coinId', () => {
+    const req = {
+      id: jobID,
+      data: {
+        coinid: 'ethereum',
+        market: 'USD'
+      }
+    }
+
+    it('returns data to the node', (done) => {
+      createRequest(req, (statusCode, data) => {
+        assert.equal(statusCode, 200)
+        assert.equal(data.jobRunID, jobID)
+        assert.isNotEmpty(data.data)
+        assert.isNumber(data.data.result)
+        assert.isNumber(data.result)
+        done()
+      })
+    })
+  })
 })
