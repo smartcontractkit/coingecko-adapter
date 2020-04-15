@@ -6,9 +6,7 @@
     "test": "./node_modules/.bin/_mocha --timeout 0"
   },
   "dependencies": {
-    "lodash": "^4.17.15",
-    "request": "^2.88.0",
-    "request-promise": "^4.2.5"
+    "external-adapter": "^0.1.4"
   },
   "devDependencies": {
     "body-parser": "^1.19.0",

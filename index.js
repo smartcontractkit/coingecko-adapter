@@ -1,68 +1,53 @@
-const rp = require('request-promise')
-const _ = require('lodash')
-const retries = process.env.RETRIES || 3
-const delay = process.env.RETRY_DELAY || 1000
-const timeout = process.env.TIMEOUT || 1000
+const { Requester, Validator } = require('external-adapter')
 
-const requestRetry = (options, retries) => {
-  return new Promise((resolve, reject) => {
-    const retry = (options, n) => {
-      return rp(options)
-        .then(response => {
-          if (response.body.error || _.isEmpty(response.body)) {
-            if (n === 1) {
-              reject(response)
-            } else {
-              setTimeout(() => {
-                retries--
-                retry(options, retries)
-              }, delay)
-            }
-          } else {
-            return resolve(response)
-          }
-        })
-        .catch(error => {
-          if (n === 1) {
-            reject(error)
-          } else {
-            setTimeout(() => {
-              retries--
-              retry(options, retries)
-            }, delay)
-          }
-        })
-    }
-    return retry(options, retries)
-  })
+const customError = (body) => {
+  if (Object.keys(body).length === 0) return true
+  return false
+}
+
+const customParams = {
+  base: ['base', 'from', 'coin'],
+  quote: ['quote', 'to', 'market'],
+  coinid: false
 }
 
 const convertFromTicker = (ticker, coinId, callback) => {
-  if (coinId.length !== 0)
-    return callback(coinId.toLowerCase())
+  if (typeof coinId !== 'undefined') return callback(coinId.toLowerCase())
 
-  requestRetry({
+  Requester.requestRetry({
     url: 'https://api.coingecko.com/api/v3/coins/list',
     json: true,
-    timeout,
     resolveWithFullResponse: true
-  }, retries)
+  }, customError)
     .then(response => {
-      let coin = response.body.find(x => x.symbol.toLowerCase() === ticker.toLowerCase())
+      const coin = response.body.find(x => x.symbol.toLowerCase() === ticker.toLowerCase())
       if (typeof coin === 'undefined')
         return callback('undefined')
       return callback(coin.id.toLowerCase())
     })
     .catch(error => {
-      return callback('')
+      return callback('Could not find data')
     })
 }
 
 const createRequest = (input, callback) => {
-  const symbol = input.data.from || input.data.coin
-  convertFromTicker(symbol, input.data.coinid || '', (coin) => {
-    let url = 'https://api.coingecko.com/api/v3/simple/price'
-    const market = input.data.to || input.data.market || 'usd'
+  let validator
+  try {
+    validator = new Validator(input, customParams)
+  } catch (error) {
+    callback(500, {
+      jobRunID: input.id,
+      status: 'errored',
+      error,
+      statusCode: 500
+    })
+  }
+
+  const jobRunID = validator.validated.id
+  const symbol = validator.validated.data.base
+  convertFromTicker(symbol, validator.validated.data.coinid, (coin) => {
+    const url = 'https://api.coingecko.com/api/v3/simple/price'
+    const market = validator.validated.data.quote
 
     const queryObj = {
       ids: coin,
@@ -73,26 +58,25 @@ const createRequest = (input, callback) => {
       url: url,
       qs: queryObj,
       json: true,
-      timeout,
       resolveWithFullResponse: true
     }
-    requestRetry(options, retries)
+    Requester.requestRetry(options, customError)
       .then(response => {
-        const result = response.body[coin.toLowerCase()][market.toLowerCase()]
+        const result = Requester.validateResult(response.body, [coin.toLowerCase(), market.toLowerCase()])
         response.body.result = result
         callback(response.statusCode, {
-          jobRunID: input.id,
+          jobRunID,
           data: response.body,
           result,
           statusCode: response.statusCode
         })
       })
       .catch(error => {
-        callback(error.statusCode, {
-          jobRunID: input.id,
+        callback(500, {
+          jobRunID,
           status: 'errored',
           error,
-          statusCode: error.statusCode
+          statusCode: 500
         })
     })
   })

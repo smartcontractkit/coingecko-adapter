@@ -2,65 +2,49 @@ const assert = require('chai').assert
 const createRequest = require('../index.js').createRequest
 
 describe('createRequest', () => {
-  const jobID = '278c97ffadb54a5bbb93cfec5f7b5503'
+  const jobID = '1'
 
-  context('Requests data', () => {
-    const req = {
-      id: jobID,
-      data: {
-        coin: 'ETH',
-        market: 'USD'
-      }
-    }
+  context('successful calls', () => {
+    const requests = [
+      { name: 'id not supplied', testData: { data: { base: 'ETH', quote: 'USD' } } },
+      { name: 'base/quote', testData: { id: jobID, data: { base: 'ETH', quote: 'USD' } } },
+      { name: 'from/to', testData: { id: jobID, data: { from: 'ETH', to: 'USD' } } },
+      { name: 'coin/market', testData: { id: jobID, data: { coin: 'ETH', market: 'USD' } } },
+      { name: 'with coinid', testData: { id: jobID, data: { coin: 'ETH', market: 'USD', coinid: 'ethereum' } } }
+    ]
 
-    it('returns data to the node', (done) => {
-      createRequest(req, (statusCode, data) => {
-        assert.equal(statusCode, 200)
-        assert.equal(data.jobRunID, jobID)
-        assert.isNotEmpty(data.data)
-        assert.isNumber(data.data.result)
-        assert.isNumber(data.result)
-        done()
+    requests.forEach(req => {
+      it(`${req.name}`, (done) => {
+        createRequest(req.testData, (statusCode, data) => {
+          assert.equal(statusCode, 200)
+          assert.equal(data.jobRunID, jobID)
+          assert.isNotEmpty(data.data)
+          assert.isAbove(Number(data.data.result), 0)
+          done()
+        })
       })
     })
   })
 
-  context('with bad input', () => {
-    const badReq = {
-      id: jobID,
-      data: {
-        coin: 'notreal'
-      }
-    }
+  context('error calls', () => {
+    const requests = [
+      { name: 'empty body', testData: {} },
+      { name: 'empty data', testData: { data: {} } },
+      { name: 'base not supplied', testData: { id: jobID, data: { quote: 'USD' } } },
+      { name: 'quote not supplied', testData: { id: jobID, data: { base: 'ETH' } } },
+      { name: 'unknown base', testData: { id: jobID, data: { base: 'not_real', quote: 'USD' } } },
+      { name: 'unknown quote', testData: { id: jobID, data: { base: 'ETH', quote: 'not_real' } } }
+    ]
 
-    it('returns an error', (done) => {
-      createRequest(badReq, (statusCode, data) => {
-        assert.equal(statusCode, 200)
-        assert.equal(data.jobRunID, jobID)
-        assert.equal(data.status, 'errored')
-        assert.isNotEmpty(data.error)
-        done()
-      })
-    })
-  })
-
-  context('Using coinId', () => {
-    const req = {
-      id: jobID,
-      data: {
-        coinid: 'ethereum',
-        market: 'USD'
-      }
-    }
-
-    it('returns data to the node', (done) => {
-      createRequest(req, (statusCode, data) => {
-        assert.equal(statusCode, 200)
-        assert.equal(data.jobRunID, jobID)
-        assert.isNotEmpty(data.data)
-        assert.isNumber(data.data.result)
-        assert.isNumber(data.result)
-        done()
+    requests.forEach(req => {
+      it(`${req.name}`, (done) => {
+        createRequest(req.testData, (statusCode, data) => {
+          assert.equal(statusCode, 500)
+          assert.equal(data.jobRunID, jobID)
+          assert.equal(data.status, 'errored')
+          assert.isNotEmpty(data.error)
+          done()
+        })
       })
     })
   })

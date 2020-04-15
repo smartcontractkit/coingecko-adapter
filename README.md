@@ -5,12 +5,24 @@ External adapter for use on Google Cloud Platform or AWS Lambda. Zip and upload,
 ## Input Params
 
 - `coinid`: The CoinGecko id of the coin to query (required if not using `from`)
-- `from` or `coin`: The ticker of the coin to query (required if not using `coinid`)
-- `to` or `market`: The currency to convert to
+- `base`, `from`, or `coin`: The ticker of the coin to query (required if not using `coinid`)
+- `quote`, `to`, or `market`: The currency to convert to
 
 ## Output Format
 
-_The JSON response is just too large to list here, see the [official documentation](https://www.coingecko.com/api/documentations/v3#/coins/get_coins__id_)._
+```json
+{
+ "jobRunID": "1",
+ "data": {
+  "ethereum": {
+   "usd": 157.24
+  },
+  "result": 157.24
+ },
+ "result": 157.24,
+ "statusCode": 200
+}
+```
 
 ## Install
 
