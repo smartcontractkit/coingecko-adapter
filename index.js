@@ -31,18 +31,7 @@ const convertFromTicker = (ticker, coinId, callback) => {
 }
 
 const createRequest = (input, callback) => {
-  let validator
-  try {
-    validator = new Validator(input, customParams)
-  } catch (error) {
-    callback(500, {
-      jobRunID: input.id,
-      status: 'errored',
-      error,
-      statusCode: 500
-    })
-  }
-
+  const validator = new Validator(input, customParams, callback)
   const jobRunID = validator.validated.id
   const symbol = validator.validated.data.base
   convertFromTicker(symbol, validator.validated.data.coinid, (coin) => {
@@ -62,23 +51,12 @@ const createRequest = (input, callback) => {
     }
     Requester.requestRetry(options, customError)
       .then(response => {
-        const result = Requester.validateResult(response.body, [coin.toLowerCase(), market.toLowerCase()])
-        response.body.result = result
-        callback(response.statusCode, {
-          jobRunID,
-          data: response.body,
-          result,
-          statusCode: response.statusCode
-        })
+        response.body.result = Requester.validateResult(response.body, [coin.toLowerCase(), market.toLowerCase()])
+        callback(response.statusCode, Requester.success(jobRunID, response))
       })
       .catch(error => {
-        callback(500, {
-          jobRunID,
-          status: 'errored',
-          error,
-          statusCode: 500
-        })
-    })
+        callback(500, Requester.errored(jobRunID, error))
+      })
   })
 }
 
