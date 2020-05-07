@@ -1,6 +1,6 @@
 # Chainlink CoinGecko External Adapter
 
-External adapter for use on Google Cloud Platform or AWS Lambda. Zip and upload, then use trigger URL as bridge endpoint.
+**This adapter has moved to our [external adapters monorepo](https://github.com/smartcontractkit/external-adapters-js)!**
 
 ## Input Params
 
